@@ -1,28 +1,47 @@
-// server/controllers/flowController.js
-import { generateCivicGraph } from "../services/aiService.js";
+import supabase from '../config/supabaseClient.js';
+import { generateFlowFromAI } from '../services/aiService.js';
 
 export const createFlow = async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) {
-      return res.status(400).json({ error: "User query/prompt is required." });
+      return res.status(400).json({ success: false, error: 'Prompt is required' });
     }
 
-    const graphData = await generateCivicGraph(prompt);
-    
-    // Auto-calculate dynamic Y positions for top-to-bottom layout
-    const formattedNodes = graphData.nodes.map((node, index) => ({
-      ...node,
-      position: { x: 250, y: index * 160 } // Vertical spacing between steps
-    }));
+    // Generate graph data from AI or fallback service
+    const flowData = await generateFlowFromAI(prompt);
 
-    return res.status(200).json({
+    // Save to Supabase DB if client is configured
+    let savedCaseId = null;
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('cases')
+        .insert([
+          {
+            title: flowData.caseTitle || 'Civic Dispute',
+            user_prompt: prompt,
+            nodes_json: flowData.nodes,
+            edges_json: flowData.edges,
+          },
+        ])
+        .select();
+
+      if (!error && data && data.length > 0) {
+        savedCaseId = data[0].id;
+      } else if (error) {
+        console.error('Supabase Insert Error:', error.message);
+      }
+    }
+
+    return res.json({
       success: true,
-      caseTitle: graphData.caseTitle,
-      nodes: formattedNodes,
-      edges: graphData.edges
+      caseId: savedCaseId,
+      caseTitle: flowData.caseTitle,
+      nodes: flowData.nodes,
+      edges: flowData.edges,
     });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    console.error('Flow Controller Error:', err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 };
