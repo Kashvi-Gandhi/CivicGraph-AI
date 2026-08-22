@@ -1,41 +1,45 @@
-// client/src/components/flow/FlowCanvas.jsx
-import React, { useMemo } from "react";
+import React, { useCallback } from "react";
 import {
   ReactFlow,
-  Controls,
   Background,
+  Controls,
   useNodesState,
   useEdgesState,
-  MiniMap,
+  BackgroundVariant,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import CustomNode from "./CustomNode";
 
-export default function FlowCanvas({ initialNodes, initialEdges, onSelectNode }) {
+const nodeTypes = {
+  customNode: CustomNode,
+};
+
+export default function FlowCanvas({ initialNodes = [], initialEdges = [], onSelectNode }) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Register custom node component mapping
-  const nodeTypes = useMemo(() => ({ customNode: CustomNode }), []);
-
-  const handleNodeClick = (_, node) => {
-    if (onSelectNode) onSelectNode(node.data);
-  };
+  const handleNodeClick = useCallback(
+    (_, node) => {
+      if (onSelectNode) {
+        onSelectNode(node.data);
+      }
+    },
+    [onSelectNode]
+  );
 
   return (
-    <div className="w-full h-[80vh] border border-slate-200 rounded-2xl shadow-inner bg-slate-50 relative overflow-hidden">
+    <div className="w-full h-[550px] bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
         fitView
       >
-        <Background color="#cbd5e1" gap={16} size={1} />
-        <Controls position="bottom-right" />
-        <MiniMap zoomable pannable nodeStrokeWidth={3} />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#334155" />
+        <Controls className="!bg-slate-900 !border-slate-800 !text-slate-100 fill-white" />
       </ReactFlow>
     </div>
   );

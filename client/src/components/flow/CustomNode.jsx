@@ -1,52 +1,56 @@
-// client/src/components/flow/CustomNode.jsx
 import React, { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
-import { Clock, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
+import { FileText, ShieldAlert, Gavel, CheckCircle2 } from "lucide-react";
 
-const statusColors = {
-  start: "border-blue-500 bg-blue-50/50 text-blue-900",
-  action_required: "border-amber-500 bg-amber-50/50 text-amber-900",
-  escalation: "border-rose-500 bg-rose-50/50 text-rose-900",
-  resolved: "border-emerald-500 bg-emerald-50/50 text-emerald-900",
+const NODE_TYPES = {
+  action: {
+    bg: "bg-indigo-950/80 border-indigo-700/80 hover:border-indigo-500",
+    badge: "bg-indigo-600/30 text-indigo-300 border-indigo-500/40",
+    icon: FileText,
+  },
+  legal: {
+    bg: "bg-amber-950/80 border-amber-700/80 hover:border-amber-500",
+    badge: "bg-amber-600/30 text-amber-300 border-amber-500/40",
+    icon: ShieldAlert,
+  },
+  tribunal: {
+    bg: "bg-emerald-950/80 border-emerald-700/80 hover:border-emerald-500",
+    badge: "bg-emerald-600/30 text-emerald-300 border-emerald-500/40",
+    icon: Gavel,
+  },
 };
 
-const CustomNode = ({ data }) => {
-  const colorClass = statusColors[data.status] || statusColors.action_required;
+function CustomNode({ data }) {
+  const nodeConfig = NODE_TYPES[data.type] || NODE_TYPES.action;
+  const Icon = nodeConfig.icon;
 
   return (
-    <div className={`w-72 rounded-xl border-2 p-4 shadow-md backdrop-blur-md transition-all hover:shadow-xl ${colorClass}`}>
-      <Handle type="target" position={Position.Top} className="!bg-slate-400 w-3 h-3" />
+    <div
+      className={`px-4 py-3 rounded-xl border ${nodeConfig.bg} shadow-xl backdrop-blur-sm min-w-[220px] transition-all cursor-pointer group hover:scale-[1.02]`}
+    >
+      <Handle type="target" position={Position.Top} className="!bg-indigo-500 !w-3 !h-3" />
       
-      {/* Step Header */}
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/80 border border-slate-200">
-          Step {data.stepNumber}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${nodeConfig.badge}`}>
+          {data.type || "Step"}
         </span>
-        <div className="flex items-center gap-1 text-xs font-medium text-slate-600">
-          <Clock className="w-3.5 h-3.5" />
-          {data.timeframe}
-        </div>
+        <Icon className="w-4 h-4 text-slate-400 group-hover:text-white transition" />
       </div>
 
-      {/* Title & Description */}
-      <h3 className="font-bold text-sm mb-1 leading-snug">{data.label}</h3>
-      <p className="text-xs text-slate-600 line-clamp-2 mb-3">{data.description}</p>
+      <div className="text-sm font-semibold text-slate-100">{data.label}</div>
+      <p className="text-xs text-slate-400 mt-1 line-clamp-2">{data.description}</p>
 
-      {/* Action Indicators */}
-      <div className="flex items-center justify-between border-t border-slate-200/60 pt-2 text-xs">
-        {data.documentTemplate?.hasTemplate ? (
-          <span className="flex items-center gap-1 font-semibold text-indigo-600">
-            <FileText className="w-3.5 h-3.5" /> Auto-Draft Ready
-          </span>
-        ) : (
-          <span className="text-slate-400">Action Step</span>
-        )}
-        <span className="text-indigo-600 hover:underline cursor-pointer font-medium">View Details →</span>
+      <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+        <span className="flex items-center gap-1 text-indigo-400">
+          <CheckCircle2 className="w-3 h-3" />
+          {data.checklist?.length || 0} required items
+        </span>
+        <span className="text-slate-500 group-hover:text-indigo-300 transition">View Details →</span>
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-400 w-3 h-3" />
+      <Handle type="source" position={Position.Bottom} className="!bg-indigo-500 !w-3 !h-3" />
     </div>
   );
-};
+}
 
 export default memo(CustomNode);
